@@ -9,9 +9,14 @@ import (
 )
 
 type Config struct {
-	Env      string   `yaml:"env"`
+	Logger   Logger   `yaml:"logger"`
 	Database Database `yaml:"database"`
 	Kafka    Kafka    `yaml:"kafka"`
+}
+
+type Logger struct {
+	Env         string `yaml:"env"`
+	LogFilePath string `yaml:"logFilePath"`
 }
 
 type Database struct {

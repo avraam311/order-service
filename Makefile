@@ -6,6 +6,9 @@ up:
 down:
 	docker-compose down -v
 
+buildup:
+	docker-compose up -d --build
+
 .PHONY: producer
 
 producer:

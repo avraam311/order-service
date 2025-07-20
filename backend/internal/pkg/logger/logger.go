@@ -2,12 +2,13 @@ package logger
 
 import (
 	"os"
+	"path/filepath"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-func SetupLogger(env string) *zap.Logger {
+func SetupLogger(env string, logFilePath string) *zap.Logger {
 	var config zap.Config
 	var encoderCfg zapcore.EncoderConfig
 
@@ -20,6 +21,13 @@ func SetupLogger(env string) *zap.Logger {
 	encoderCfg.TimeKey = "timestamp"
 	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
 
+	var outputPaths []string
+	if env == "prod" {
+		outputPaths = []string{"stderr", logFilePath}
+	} else {
+		outputPaths = []string{"stdout", logFilePath}
+	}
+
 	switch env {
 	case "prod":
 		config = zap.Config{
@@ -29,7 +37,7 @@ func SetupLogger(env string) *zap.Logger {
 			DisableStacktrace: false,
 			Encoding:          "json",
 			EncoderConfig:     encoderCfg,
-			OutputPaths:       []string{"stderr"},
+			OutputPaths:       outputPaths,
 			ErrorOutputPaths:  []string{"stderr"},
 			InitialFields:     map[string]interface{}{"pid": os.Getpid()},
 		}
@@ -41,11 +49,25 @@ func SetupLogger(env string) *zap.Logger {
 			DisableStacktrace: false,
 			Encoding:          "console",
 			EncoderConfig:     encoderCfg,
-			OutputPaths:       []string{"stdout"},
+			OutputPaths:       outputPaths,
 			ErrorOutputPaths:  []string{"stderr"},
 			InitialFields:     map[string]interface{}{"pid": os.Getpid()},
 		}
 	}
 
-	return zap.Must(config.Build())
+	if logFilePath != "" {
+		logFileDir := filepath.Dir(logFilePath)
+		if _, err := os.Stat(logFileDir); os.IsNotExist(err) {
+			err := os.MkdirAll(logFileDir, 0755)
+			if err != nil {
+				panic("Could not create log directory: " + err.Error())
+			}
+		}
+	}
+
+	logger, err := config.Build()
+	if err != nil {
+		panic("Failed to build logger: " + err.Error())
+	}
+	return logger
 }

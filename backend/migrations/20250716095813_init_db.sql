@@ -26,8 +26,8 @@ CREATE TABLE IF NOT EXISTS delivery (
 );
 
 CREATE TABLE IF NOT EXISTS payment (
-    transaction TEXT PRIMARY KEY,
     order_uid UUID NOT NULL REFERENCES orders(order_uid) ON DELETE CASCADE,
+    transaction TEXT PRIMARY KEY,
     request_id TEXT,
     currency VARCHAR(5) NOT NULL,
     provider VARCHAR(50) NOT NULL,

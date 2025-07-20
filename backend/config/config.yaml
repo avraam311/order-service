@@ -1,7 +1,6 @@
-env: "dev"
-
-server:
-  httpPort: ":8080"
+logger:
+  env: "dev"
+  logFilePath: "/logs/logs.log"
 
 database:
   sslmode: "disable"
@@ -11,8 +10,3 @@ kafka:
   topic: "order-service"
   brokers:
     - "kafka:9092"
-
-cache:
-  defaultExpiration: "5m"
-  cleanupInterval: "10m"
-  preloadLimit: 100
