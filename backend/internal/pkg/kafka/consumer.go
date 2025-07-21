@@ -14,6 +14,7 @@ var (
 	ErrCreateOrder = errors.New("error creating order")
 	ErrInvalidJSON = errors.New("invalid JSON format")
 	ErrNilOrder    = errors.New("order is nil")
+	ErrValidation  = errors.New("validation error")
 )
 
 type messageHandler interface {
@@ -104,6 +105,12 @@ func (c *Consumer) handleMessageError(m kafka.Message, err error) {
 		)
 	case errors.Is(err, ErrCreateOrder):
 		c.logger.Warn("failed to create order",
+			zap.Int64("offset", m.Offset),
+			zap.String("message", msgStr),
+			zap.Error(err),
+		)
+	case errors.Is(err, ErrValidation):
+		c.logger.Warn("validation error",
 			zap.Int64("offset", m.Offset),
 			zap.String("message", msgStr),
 			zap.Error(err),

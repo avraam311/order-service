@@ -6,14 +6,14 @@ import (
 	"sync"
 	"syscall"
 
-	"go.uber.org/zap"
-
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 
 	"github.com/avraam311/order-service/backend/internal/config"
 	"github.com/avraam311/order-service/backend/internal/pkg/kafka"
 	"github.com/avraam311/order-service/backend/internal/pkg/kafka/handlers"
 	"github.com/avraam311/order-service/backend/internal/pkg/logger"
+	"github.com/avraam311/order-service/backend/internal/pkg/validator"
 	orderRepo "github.com/avraam311/order-service/backend/internal/repository/order"
 	orderService "github.com/avraam311/order-service/backend/internal/service/order"
 )
@@ -26,7 +26,7 @@ func main() {
 
 	cfg := config.MustLoad()
 	log := logger.SetupLogger(cfg.Logger.Env, cfg.Logger.LogFilePath)
-	defer log.Sync() 
+	defer log.Sync()
 
 	dbpool, err := pgxpool.New(ctx, cfg.DatabaseURL())
 	if err != nil {
@@ -35,8 +35,9 @@ func main() {
 
 	repo := orderRepo.New(dbpool)
 	orderService := orderService.New(nil, repo)
+	val := validator.New()
 
-	orderCreatedHandler := handlers.NewCreateHandler(log, orderService)
+	orderCreatedHandler := handlers.NewCreateHandler(val, orderService)
 
 	reader := kafka.NewReader(cfg.Kafka.GroupID, cfg.Kafka.Topic, cfg.Kafka.Brokers)
 	consumer := kafka.NewConsumer(reader, log, orderCreatedHandler)
