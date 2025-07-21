@@ -9,9 +9,14 @@ import (
 )
 
 type Config struct {
+	Server   Server   `yaml:"server"`
 	Logger   Logger   `yaml:"logger"`
 	Database Database `yaml:"database"`
 	Kafka    Kafka    `yaml:"kafka"`
+}
+
+type Server struct {
+	HTTPPort string `yaml:"httpPort"`
 }
 
 type Logger struct {

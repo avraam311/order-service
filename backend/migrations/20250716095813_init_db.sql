@@ -26,8 +26,8 @@ CREATE TABLE IF NOT EXISTS delivery (
 );
 
 CREATE TABLE IF NOT EXISTS payment (
-    order_uid UUID NOT NULL REFERENCES orders(order_uid) ON DELETE CASCADE,
-    transaction TEXT PRIMARY KEY,
+    order_uid UUID PRIMARY KEY REFERENCES orders(order_uid) ON DELETE CASCADE,
+    transaction TEXT,
     request_id TEXT,
     currency VARCHAR(5) NOT NULL,
     provider VARCHAR(50) NOT NULL,
@@ -40,8 +40,7 @@ CREATE TABLE IF NOT EXISTS payment (
 );
 
 CREATE TABLE IF NOT EXISTS items (
-    id SERIAL PRIMARY KEY,
-    order_id UUID NOT NULL REFERENCES orders(order_uid) ON DELETE CASCADE,
+    order_id UUID PRIMARY KEY REFERENCES orders(order_uid) ON DELETE CASCADE,
     chrt_id BIGINT NOT NULL,
     track_number VARCHAR(32) NOT NULL,
     price INT NOT NULL,
