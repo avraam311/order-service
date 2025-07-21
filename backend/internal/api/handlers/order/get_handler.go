@@ -14,11 +14,10 @@ import (
 )
 
 var (
-	ErrOrderNotFound    = errors.New("order not found")
-	ErrDeliveryNotFound = errors.New("delivery not found")
-	ErrPaymentNotFound  = errors.New("payment not found")
-	ErrItemsNotFound    = errors.New("items not found")
-	ErrScanRow          = errors.New("failed to scan row")
+	ErrOrderNotFound     = errors.New("order not found")
+	ErrScanRow           = errors.New("failed to scan row")
+	ErrItemScanFailed    = errors.New("failed to scan order items")
+	ErrGetItemsByOrderId = errors.New("failed to get items by order ID")
 )
 
 type orderService interface {
@@ -55,12 +54,10 @@ func (h *GetHandler) GetOrderByID(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, ErrOrderNotFound):
 			http.Error(w, "order not found", http.StatusNotFound)
-		case errors.Is(err, ErrDeliveryNotFound):
-			http.Error(w, "delivery not found", http.StatusNotFound)
-		case errors.Is(err, ErrPaymentNotFound):
-			http.Error(w, "payment not found", http.StatusNotFound)
-		case errors.Is(err, ErrItemsNotFound):
-			http.Error(w, "items not found", http.StatusNotFound)
+		case errors.Is(err, ErrItemScanFailed):
+			http.Error(w, "failed to scan order items", http.StatusNotFound)
+		case errors.Is(err, ErrGetItemsByOrderId):
+			http.Error(w, "failed to get items by order ID", http.StatusNotFound)
 		case errors.Is(err, ErrScanRow):
 			http.Error(w, "failed to scan row", http.StatusInternalServerError)
 		default:

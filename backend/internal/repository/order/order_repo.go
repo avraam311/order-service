@@ -13,12 +13,16 @@ import (
 )
 
 var (
-	ErrTxBegin        = errors.New("failed to begin transaction")
-	ErrTxCommit       = errors.New("failed to commit transaction")
-	ErrInsertOrder    = errors.New("failed to insert into orders")
-	ErrInsertDelivery = errors.New("failed to insert into delivery")
-	ErrInsertPayment  = errors.New("failed to insert into payment")
-	ErrInsertItem     = errors.New("failed to insert into items")
+	ErrTxBegin           = errors.New("failed to begin transaction")
+	ErrTxCommit          = errors.New("failed to commit transaction")
+	ErrInsertOrder       = errors.New("failed to insert into orders")
+	ErrInsertDelivery    = errors.New("failed to insert into delivery")
+	ErrInsertPayment     = errors.New("failed to insert into payment")
+	ErrInsertItem        = errors.New("failed to insert into items")
+	ErrOrderNotFound     = errors.New("order not found")
+	ErrScanRow           = errors.New("failed to scan row")
+	ErrGetItemsByOrderId = errors.New("failed to get items by order ID")
+	ErrItemScanFailed    = errors.New("failed to scan order items")
 )
 
 type Repository struct {
@@ -106,4 +110,79 @@ func (r *Repository) SaveOrder(ctx context.Context, order *models.Order) (uuid.U
 	}
 
 	return order.OrderID, nil
+}
+
+func (r *Repository) GetOrderById(ctx context.Context, orderID uuid.UUID) (*models.Order, error) {
+	query := `
+	SELECT
+		o.order_uid, o.track_number, o.entry, o.locale, o.internal_signature, o.customer_id,
+		o.delivery_service, o.shardkey, o.sm_id, o.date_created, o.oof_shard,
+	
+		d.name, d.phone, d.zip, d.city, d.address, d.region, d.email,
+	
+		p.transaction, p.request_id, p.currency, p.provider,
+		p.amount, p.payment_dt, p.bank, p.delivery_cost, p.goods_total, p.custom_fee
+	FROM orders o
+	JOIN delivery d ON o.order_uid = d.order_uid
+	JOIN payment p ON o.order_uid = p.order_uid
+	WHERE o.order_uid = $1;
+	`
+
+	row := r.db.QueryRow(ctx, query, orderID)
+
+	var o models.Order
+	var d models.Delivery
+	var p models.Payment
+
+	err := row.Scan(
+		&o.OrderID, &o.TrackNumber, &o.Entry, &o.Locale, &o.InternalSignature, &o.CustomerId,
+		&o.DeliveryService, &o.Shardkey, &o.SmId, &o.DateCreated, &o.OofShard,
+
+		&d.Name, &d.Phone, &d.Zip, &d.City, &d.Address, &d.Region, &d.Email,
+
+		&p.Transaction, &p.RequestID, &p.Currency, &p.Provider,
+		&p.Amount, &p.PaymentDT, &p.Bank, &p.DeliveryCost, &p.GoodsTotal, &p.CustomFee,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("backend/internal/repository/order_repo.go, get order by id: %w", ErrOrderNotFound)
+		}
+
+		return nil, fmt.Errorf("backend/internal/repository/order_repo.go, scan row: %w", ErrScanRow)
+	}
+
+	o.Delivery = d
+	o.Payment = p
+
+	return &o, err
+}
+
+func (r *Repository) GetItemsByOrderID(ctx context.Context, orderID uuid.UUID) ([]models.Item, error) {
+	query := `
+	SELECT chrt_id, track_number, price, rid, name, sale, size, total_price, nm_id, brand, status
+	FROM items
+	WHERE order_id = $1;
+	`
+
+	rows, err := r.db.Query(ctx, query, orderID)
+	if err != nil {
+		return nil, fmt.Errorf("backend/internal/repository/order_repo.go, get items by order id: %w", ErrGetItemsByOrderId)
+	}
+	defer rows.Close()
+
+	var items []models.Item
+	for rows.Next() {
+		var item models.Item
+		err = rows.Scan(
+			&item.ChrtID, &item.TrackNumber, &item.Price, &item.RID, &item.Name, &item.Sale,
+			&item.Size, &item.TotalPrice, &item.NmID, &item.Brand, &item.Status,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("backend/internal/repository/order_repo.go, scan item row: %w", ErrItemScanFailed)
+		}
+
+		items = append(items, item)
+	}
+
+	return items, nil
 }
