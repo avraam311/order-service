@@ -14,13 +14,20 @@ type orderRepository interface {
 	GetItemsByOrderID(ctx context.Context, orderID uuid.UUID) ([]models.Item, error)
 }
 
-type Service struct {
-	repo orderRepository
+type orderCache interface {
+	Get(orderID uuid.UUID) (*models.Order, bool)
+	Set(orderID uuid.UUID, order *models.Order)
 }
 
-func New(repo orderRepository) *Service {
+type Service struct {
+	cache orderCache
+	repo  orderRepository
+}
+
+func New(c orderCache, repo orderRepository) *Service {
 	return &Service{
-		repo: repo,
+		cache: c,
+		repo:  repo,
 	}
 }
 
@@ -34,6 +41,12 @@ func (s *Service) SaveOrder(ctx context.Context, order *models.Order) (uuid.UUID
 }
 
 func (s *Service) GetOrderByID(ctx context.Context, orderID uuid.UUID) (*models.Order, error) {
+	if s.cache != nil {
+		if order, found := s.cache.Get(orderID); found {
+			return order, nil
+		}
+	}
+
 	order, err := s.repo.GetOrderById(ctx, orderID)
 	if err != nil {
 		return nil, err
@@ -45,6 +58,8 @@ func (s *Service) GetOrderByID(ctx context.Context, orderID uuid.UUID) (*models.
 	}
 
 	order.Items = items
+
+	s.cache.Set(orderID, order)
 
 	return order, nil
 }

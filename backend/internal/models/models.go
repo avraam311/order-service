@@ -34,8 +34,8 @@ type Delivery struct {
 }
 
 type Payment struct {
-	RequestID    string `json:"request_id"`
 	Transaction  string `json:"transaction" validate:"required"`
+	RequestID    string `json:"request_id"`
 	Currency     string `json:"currency" validate:"required"`
 	Provider     string `json:"provider" validate:"required"`
 	Amount       int    `json:"amount" validate:"required"`

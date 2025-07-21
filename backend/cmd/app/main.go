@@ -12,12 +12,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
+	orderHandler "github.com/avraam311/order-service/backend/internal/api/handlers/order"
 	"github.com/avraam311/order-service/backend/internal/api/server"
 	"github.com/avraam311/order-service/backend/internal/config"
 	"github.com/avraam311/order-service/backend/internal/pkg/logger"
+	"github.com/avraam311/order-service/backend/internal/pkg/cache"
 	orderRepo "github.com/avraam311/order-service/backend/internal/repository/order"
 	orderService "github.com/avraam311/order-service/backend/internal/service/order"
-	orderHandler "github.com/avraam311/order-service/backend/internal/api/handlers/order"
 )
 
 func main() {
@@ -33,8 +34,14 @@ func main() {
 	}
 
 	repo := orderRepo.New(dbpool)
+	cache := cache.New(cfg.Cache.DefaultExpiration, cfg.Cache.CleanupInterval, log, repo)
 
-	orderService := orderService.New(repo)
+	err = cache.Preload(ctx, cfg.Cache.PreloadLimit)
+	if err != nil {
+		log.Fatal("error preloading cache", zap.Error(err))
+	}
+
+	orderService := orderService.New(cache, repo)
 	orderGetHandler := orderHandler.NewGetHandler(log, orderService)
 
 	r := server.NewRouter(orderGetHandler)

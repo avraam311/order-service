@@ -34,7 +34,7 @@ func main() {
 	}
 
 	repo := orderRepo.New(dbpool)
-	orderService := orderService.New(repo)
+	orderService := orderService.New(nil, repo)
 
 	orderCreatedHandler := handlers.NewCreateHandler(log, orderService)
 

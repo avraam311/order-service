@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -13,6 +14,7 @@ type Config struct {
 	Logger   Logger   `yaml:"logger"`
 	Database Database `yaml:"database"`
 	Kafka    Kafka    `yaml:"kafka"`
+	Cache    Cache    `yaml:"cache"`
 }
 
 type Server struct {
@@ -37,6 +39,12 @@ type Kafka struct {
 	GroupID string   `yaml:"groupID"`
 	Topic   string   `yaml:"topic"`
 	Brokers []string `yaml:"brokers"`
+}
+
+type Cache struct {
+	DefaultExpiration time.Duration `yaml:"defaultExpiration"`
+	CleanupInterval   time.Duration `yaml:"cleanupInterval"`
+	PreloadLimit      int           `yaml:"preloadLimit"`
 }
 
 func (c *Config) DatabaseURL() string {
