@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/google/uuid"
 	"net/http"
+
+	"github.com/google/uuid"
 
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
@@ -14,10 +15,10 @@ import (
 )
 
 var (
-	ErrOrderNotFound     = errors.New("order not found")
-	ErrScanRow           = errors.New("failed to scan row")
-	ErrItemScanFailed    = errors.New("failed to scan order items")
-	ErrGetItemsByOrderId = errors.New("failed to get items by order ID")
+	ErrOrderNotFound     = errors.New("заказ не найден")
+	ErrScanRow           = errors.New("ошибка сканирования строки")
+	ErrItemScanFailed    = errors.New("ошибка сканирования items заказа")
+	ErrGetItemsByOrderId = errors.New("ошибка получения items по orderID")
 )
 
 type orderService interface {
@@ -40,12 +41,12 @@ func (h *GetHandler) GetOrderByID(w http.ResponseWriter, r *http.Request) {
 	orderStr := chi.URLParam(r, "id")
 	orderID, err := uuid.Parse(orderStr)
 	if err != nil {
-		http.Error(w, "invalid UUID format", http.StatusBadRequest)
+		http.Error(w, "неправильный формат uuid", http.StatusBadRequest)
 		return
 	}
 
 	if orderID == uuid.Nil {
-		http.Error(w, "order ID is required", http.StatusBadRequest)
+		http.Error(w, "нужно orderID", http.StatusBadRequest)
 		return
 	}
 
@@ -53,29 +54,29 @@ func (h *GetHandler) GetOrderByID(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrOrderNotFound):
-			http.Error(w, "order not found", http.StatusNotFound)
+			http.Error(w, "заказ не найден", http.StatusNotFound)
 		case errors.Is(err, ErrItemScanFailed):
-			http.Error(w, "failed to scan order items", http.StatusNotFound)
+			http.Error(w, "ошибка сканирования items заказа", http.StatusNotFound)
 		case errors.Is(err, ErrGetItemsByOrderId):
-			http.Error(w, "failed to get items by order ID", http.StatusNotFound)
+			http.Error(w, "ошибка получения items по orderID", http.StatusNotFound)
 		case errors.Is(err, ErrScanRow):
-			http.Error(w, "failed to scan row", http.StatusInternalServerError)
+			http.Error(w, "ошибка сканирования строки", http.StatusInternalServerError)
 		default:
-			h.logger.Error("backend/internal/api/handlers/order/get_handler.go, failed to get order", zap.Error(err))
-			http.Error(w, "internal server error", http.StatusInternalServerError)
+			h.logger.Error("backend/internal/api/handlers/order/get_handler.go, ошибка получения заказа", zap.Error(err))
+			http.Error(w, "ошибка сервера", http.StatusInternalServerError)
 		}
 
 		return
 	}
 
-	h.logger.Info("order received", zap.Any("order", order))
+	h.logger.Info("заказ получен", zap.Any("order", order))
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	err = json.NewEncoder(w).Encode(order)
 	if err != nil {
-		h.logger.Error("backend/internal/api/handlers/order/get_handler.go, failed to encode order response", zap.Error(err))
-		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+		h.logger.Error("backend/internal/api/handlers/order/get_handler.go, ошибка кодироавния ответа для закака", zap.Error(err))
+		http.Error(w, "ошибка кодирования ответа", http.StatusInternalServerError)
 		return
 	}
 }

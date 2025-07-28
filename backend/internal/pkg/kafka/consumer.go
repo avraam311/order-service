@@ -11,10 +11,10 @@ import (
 )
 
 var (
-	ErrCreateOrder = errors.New("error creating order")
-	ErrInvalidJSON = errors.New("invalid JSON format")
-	ErrNilOrder    = errors.New("order is nil")
-	ErrValidation  = errors.New("validation error")
+	ErrCreateOrder = errors.New("ошибка создания закака")
+	ErrInvalidJSON = errors.New("неправильный json")
+	ErrNilOrder    = errors.New("пустой заказ")
+	ErrValidation  = errors.New("ошибка валидации")
 )
 
 type messageHandler interface {
@@ -52,11 +52,11 @@ func (c *Consumer) ConsumeMessage(ctx context.Context, wg *sync.WaitGroup) {
 
 	go func() {
 		<-ctx.Done()
-		c.logger.Info("Received shutdown signal, closing consumer")
+		c.logger.Info("получен сигнал shutdown, закрытие консьюмера")
 		c.Close()
 	}()
 
-	c.logger.Info("ConsumeMessage started",
+	c.logger.Info("читаем сообщения",
 		zap.String("topic", c.reader.Config().Topic),
 		zap.String("groupID", c.reader.Config().GroupID),
 	)
@@ -65,11 +65,11 @@ func (c *Consumer) ConsumeMessage(ctx context.Context, wg *sync.WaitGroup) {
 		m, err := c.reader.ReadMessage(ctx)
 		if err != nil {
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-				c.logger.Warn("backend/internal/pkg/kafka/consumer.go, context canceled or deadline exceeded, stopping consumer", zap.Error(err))
+				c.logger.Warn("backend/internal/pkg/kafka/consumer.go, контекст отменен или прошел дедлайн, закрытие консьюмера", zap.Error(err))
 				break
 			}
 
-			c.logger.Error("backend/internal/pkg/kafka/consumer.go, error reading message", zap.Error(err))
+			c.logger.Error("backend/internal/pkg/kafka/consumer.go, ошибка чтения сообщения", zap.Error(err))
 			continue
 		}
 
@@ -78,13 +78,13 @@ func (c *Consumer) ConsumeMessage(ctx context.Context, wg *sync.WaitGroup) {
 			continue
 		}
 
-		c.logger.Info("message handled successfully",
+		c.logger.Info("сообщения успешно прочтено",
 			zap.Int64("offset", m.Offset),
 			zap.String("message", string(m.Value)),
 		)
 	}
 
-	c.logger.Info("ConsumeMessage finished")
+	c.logger.Info("чтение сообщения завершено")
 }
 
 func (c *Consumer) handleMessageError(m kafka.Message, err error) {
@@ -92,31 +92,31 @@ func (c *Consumer) handleMessageError(m kafka.Message, err error) {
 
 	switch {
 	case errors.Is(err, ErrInvalidJSON):
-		c.logger.Warn("invalid JSON format",
+		c.logger.Warn("неправильный json",
 			zap.Int64("offset", m.Offset),
 			zap.String("message", msgStr),
 			zap.Error(err),
 		)
 	case errors.Is(err, ErrNilOrder):
-		c.logger.Warn("nil order received",
+		c.logger.Warn("получен пустой заказ",
 			zap.Int64("offset", m.Offset),
 			zap.String("message", msgStr),
 			zap.Error(err),
 		)
 	case errors.Is(err, ErrCreateOrder):
-		c.logger.Warn("failed to create order",
+		c.logger.Warn("ошибка при создании заказа",
 			zap.Int64("offset", m.Offset),
 			zap.String("message", msgStr),
 			zap.Error(err),
 		)
 	case errors.Is(err, ErrValidation):
-		c.logger.Warn("validation error",
+		c.logger.Warn("ошибка валидации",
 			zap.Int64("offset", m.Offset),
 			zap.String("message", msgStr),
 			zap.Error(err),
 		)
 	default:
-		c.logger.Error("unexpected error while handling message",
+		c.logger.Error("неожиданная ошибка при чтении сообщения",
 			zap.Int64("offset", m.Offset),
 			zap.String("message", msgStr),
 			zap.Error(err),

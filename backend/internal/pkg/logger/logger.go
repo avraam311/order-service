@@ -60,14 +60,14 @@ func SetupLogger(env string, logFilePath string) *zap.Logger {
 		if _, err := os.Stat(logFileDir); os.IsNotExist(err) {
 			err := os.MkdirAll(logFileDir, 0755)
 			if err != nil {
-				panic("Could not create log directory: " + err.Error())
+				panic("ошибка при создании директории для логов" + err.Error())
 			}
 		}
 	}
 
 	logger, err := config.Build()
 	if err != nil {
-		panic("Failed to build logger: " + err.Error())
+		panic("ошибка создания логгера" + err.Error())
 	}
 	return logger
 }

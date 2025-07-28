@@ -63,12 +63,12 @@ func MustLoad() *Config {
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath("./config")
 	if err := viper.ReadInConfig(); err != nil {
-		log.Panicf("fatal error config file: %v", err)
+		log.Panicf("ошибка чтения конфига: %v", err)
 	}
 
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {
-		log.Fatalf("unable to decode into struct, %v", err)
+		log.Fatalf("ошибка при десериализация конфига в структуру, %v", err)
 	}
 
 	cfg.Database.Host = os.Getenv("DB_HOST")

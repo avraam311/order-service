@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	ErrCreateOrder = errors.New("error creating order")
-	ErrInvalidJSON = errors.New("invalid JSON format")
-	ErrNilOrder    = errors.New("order is nil")
-	ErrValidation  = errors.New("validation error")
+	ErrCreateOrder = errors.New("ошибка создания закака")
+	ErrInvalidJSON = errors.New("неправильный json")
+	ErrNilOrder    = errors.New("пустой заказ")
+	ErrValidation  = errors.New("ошибка валидации")
 )
 
 type orderService interface {

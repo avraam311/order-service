@@ -30,7 +30,7 @@ func main() {
 
 	dbpool, err := pgxpool.New(ctx, cfg.DatabaseURL())
 	if err != nil {
-		log.Fatal("backend/cmd/consumer/main.go, error creating connection pool", zap.Error(err))
+		log.Fatal("backend/cmd/consumer/main.go, ошибка при создании пула соединений", zap.Error(err))
 	}
 
 	repo := orderRepo.New(dbpool)
@@ -44,19 +44,19 @@ func main() {
 	wg.Add(1)
 	go consumer.ConsumeMessage(ctx, &wg)
 
-	log.Info("Kafka consumer started...")
+	log.Info("кафка консьюмер запущен")
 
 	<-ctx.Done()
-	log.Info("shutdown signal received")
+	log.Info("получен сигнал shutdown")
 
 	wg.Wait()
 
-	log.Info("closing kafka consumer...")
+	log.Info("закрытие консьюмера кафки")
 	err = consumer.Close()
 	if err != nil {
-		log.Error("backend/cmd/consumer/main.go, error closing kafka consumer: %v", zap.Error(err))
+		log.Error("backend/cmd/consumer/main.go, ошибка при закрытии консьюмера кафки: %v", zap.Error(err))
 	}
 
-	log.Info("closing database pool...")
+	log.Info("закрытие пула соединений бд")
 	dbpool.Close()
 }

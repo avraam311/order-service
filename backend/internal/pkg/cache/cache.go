@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	ErrCachePreload = errors.New("failed to preload cache")
+	ErrCachePreload = errors.New("ошибка загрузки кэша")
 )
 
 type orderRepository interface {
@@ -53,12 +53,12 @@ func (g *GoCache) Set(orderID uuid.UUID, order *models.Order) {
 func (g *GoCache) Preload(ctx context.Context, limit int) error {
 	orders, err := g.repo.GetLastOrders(ctx, limit)
 	if err != nil {
-		g.logger.Error("failed to preload cache", zap.Error(err))
-		return fmt.Errorf("backend/internal/pkg/cache/cache.go, preload cache: %w", ErrCachePreload)
+		g.logger.Error("ошибка загрузки кэша", zap.Error(err))
+		return fmt.Errorf("backend/internal/pkg/cache/cache.go, ошибка загрузки кэша: %w", ErrCachePreload)
 	}
 
 	if len(orders) == 0 {
-		g.logger.Info("no orders found to preload cache")
+		g.logger.Info("нет заказов для загрузки в кэш")
 		return nil
 	}
 
@@ -67,6 +67,6 @@ func (g *GoCache) Preload(ctx context.Context, limit int) error {
 		g.Set(order.OrderID, &o)
 	}
 
-	g.logger.Info("cache preloaded successfully", zap.Int("orders_count", len(orders)))
+	g.logger.Info("кэш загружен успешно", zap.Int("orders_count", len(orders)))
 	return nil
 }

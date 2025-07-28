@@ -13,17 +13,17 @@ import (
 )
 
 var (
-	ErrTxBegin           = errors.New("failed to begin transaction")
-	ErrTxCommit          = errors.New("failed to commit transaction")
-	ErrInsertOrder       = errors.New("failed to insert into orders")
-	ErrInsertDelivery    = errors.New("failed to insert into delivery")
-	ErrInsertPayment     = errors.New("failed to insert into payment")
-	ErrInsertItem        = errors.New("failed to insert into items")
-	ErrOrderNotFound     = errors.New("order not found")
-	ErrScanRow           = errors.New("failed to scan row")
-	ErrGetItemsByOrderId = errors.New("failed to get items by order ID")
-	ErrItemScanFailed    = errors.New("failed to scan order items")
-	ErrGetLastOrders     = errors.New("failed to get last orders")
+	ErrTxBegin           = errors.New("ошибка при начале транзакции")
+	ErrTxCommit          = errors.New("ошибка при применении транзакции")
+	ErrInsertOrder       = errors.New("ошибка при добавлении orders")
+	ErrInsertDelivery    = errors.New("ошибка при добавлении delivery")
+	ErrInsertPayment     = errors.New("ошибка при добавлении payment")
+	ErrInsertItem        = errors.New("ошибка при добавлении items")
+	ErrOrderNotFound     = errors.New("заказ не найден")
+	ErrScanRow           = errors.New("ошибка сканирования строки")
+	ErrGetItemsByOrderId = errors.New("ошибка получения items по orderID")
+	ErrItemScanFailed    = errors.New("ошибка сканирования items заказа")
+	ErrGetLastOrders     = errors.New("ошибка при получении последних заказов")
 )
 
 type Repository struct {
@@ -146,10 +146,10 @@ func (r *Repository) GetOrderById(ctx context.Context, orderID uuid.UUID) (*mode
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("backend/internal/repository/order_repo.go, get order by id: %w", ErrOrderNotFound)
+			return nil, fmt.Errorf("backend/internal/repository/order_repo.go, получение заказа по id: %w", ErrOrderNotFound)
 		}
 
-		return nil, fmt.Errorf("backend/internal/repository/order_repo.go, scan row: %w", ErrScanRow)
+		return nil, fmt.Errorf("backend/internal/repository/order_repo.go, сканирование строки: %w", ErrScanRow)
 	}
 
 	o.Delivery = d
@@ -167,7 +167,7 @@ func (r *Repository) GetItemsByOrderID(ctx context.Context, orderID uuid.UUID) (
 
 	rows, err := r.db.Query(ctx, query, orderID)
 	if err != nil {
-		return nil, fmt.Errorf("backend/internal/repository/order_repo.go, get items by order id: %w", ErrGetItemsByOrderId)
+		return nil, fmt.Errorf("backend/internal/repository/order_repo.go, получение items по orderID: %w", ErrGetItemsByOrderId)
 	}
 	defer rows.Close()
 
@@ -179,7 +179,7 @@ func (r *Repository) GetItemsByOrderID(ctx context.Context, orderID uuid.UUID) (
 			&item.Size, &item.TotalPrice, &item.NmID, &item.Brand, &item.Status,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("backend/internal/repository/order_repo.go, scan item row: %w", ErrItemScanFailed)
+			return nil, fmt.Errorf("backend/internal/repository/order_repo.go, сканирование строки item: %w", ErrItemScanFailed)
 		}
 
 		items = append(items, item)
@@ -207,7 +207,7 @@ func (r *Repository) GetLastOrders(ctx context.Context, limit int) ([]models.Ord
 
 	rows, err := r.db.Query(ctx, query, limit)
 	if err != nil {
-		return nil, fmt.Errorf("backend/internal/repository/order_repo.go, get last orders: %w", ErrGetLastOrders)
+		return nil, fmt.Errorf("backend/internal/repository/order_repo.go, получение последних заказов: %w", ErrGetLastOrders)
 	}
 	defer rows.Close()
 
@@ -229,10 +229,10 @@ func (r *Repository) GetLastOrders(ctx context.Context, limit int) ([]models.Ord
 		)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				return nil, fmt.Errorf("backend/internal/repository/order_repo.go, get order by id: %w", ErrOrderNotFound)
+				return nil, fmt.Errorf("backend/internal/repository/order_repo.go, получение заказа по id: %w", ErrOrderNotFound)
 			}
 
-			return nil, fmt.Errorf("backend/internal/repository/order_repo.go, scan row: %w", ErrScanRow)
+			return nil, fmt.Errorf("backend/internal/repository/order_repo.go, сканирование строки: %w", ErrScanRow)
 		}
 
 		o.Delivery = d
@@ -240,7 +240,7 @@ func (r *Repository) GetLastOrders(ctx context.Context, limit int) ([]models.Ord
 
 		items, err := r.GetItemsByOrderID(ctx, o.OrderID)
 		if err != nil {
-			return nil, fmt.Errorf("backend/internal/repository/order_repo.go, get items by order id: %w", ErrGetItemsByOrderId)
+			return nil, fmt.Errorf("backend/internal/repository/order_repo.go, получение items по orderID: %w", ErrGetItemsByOrderId)
 		}
 		o.Items = items
 
