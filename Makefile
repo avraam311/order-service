@@ -1,13 +1,10 @@
 TOPIC=order-service
 
 up:
-	docker-compose up -d
+	docker-compose up -d --build
 
 down:
 	docker-compose down -v
-
-buildup:
-	docker-compose up -d --build
 
 .PHONY: producer
 
