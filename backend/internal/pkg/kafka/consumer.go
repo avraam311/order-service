@@ -3,18 +3,12 @@ package kafka
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
-)
-
-var (
-	ErrCreateOrder = errors.New("ошибка создания закака")
-	ErrInvalidJSON = errors.New("неправильный json")
-	ErrNilOrder    = errors.New("пустой заказ")
-	ErrValidation  = errors.New("ошибка валидации")
 )
 
 type messageHandler interface {
@@ -90,26 +84,27 @@ func (c *Consumer) ConsumeMessage(ctx context.Context, wg *sync.WaitGroup) {
 func (c *Consumer) handleMessageError(m kafka.Message, err error) {
 	msgStr := string(m.Value)
 
+	errMsg := err.Error()
 	switch {
-	case errors.Is(err, ErrInvalidJSON):
+	case strings.Contains(errMsg, "неправильный json"):
 		c.logger.Warn("неправильный json",
 			zap.Int64("offset", m.Offset),
 			zap.String("message", msgStr),
 			zap.Error(err),
 		)
-	case errors.Is(err, ErrNilOrder):
+	case strings.Contains(errMsg, "пустой заказ"):
 		c.logger.Warn("получен пустой заказ",
 			zap.Int64("offset", m.Offset),
 			zap.String("message", msgStr),
 			zap.Error(err),
 		)
-	case errors.Is(err, ErrCreateOrder):
+	case strings.Contains(errMsg, "ошибка создания заказа"):
 		c.logger.Warn("ошибка при создании заказа",
 			zap.Int64("offset", m.Offset),
 			zap.String("message", msgStr),
 			zap.Error(err),
 		)
-	case errors.Is(err, ErrValidation):
+	case strings.Contains(errMsg, "ошибка валидации"):
 		c.logger.Warn("ошибка валидации",
 			zap.Int64("offset", m.Offset),
 			zap.String("message", msgStr),
